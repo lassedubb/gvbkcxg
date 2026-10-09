@@ -1,61 +1,57 @@
-# CONVERT. v1 — gratis webapp
+# CONVERT. v2 — betrouwbare conversie en betere foutdiagnose
 
-**CONVERT.** gebruikt jouw handgeschreven rode logo en de zwart-rode vormgeving van STEMS. en STRETCH.
+## Wat is nieuw?
 
-## Wat werkt
+- Spotify-links geven bij een mislukte titelherkenning meteen de optie om op artiest/titel te zoeken. Er wordt **geen Spotify-audiostream gedownload**.
+- Een directe YouTube-link wordt voortaan op basis van het video-ID herkend, ook wanneer de server de videometadata niet kan ophalen.
+- Foutcodes leggen uit of de YouTube-server weigert (YOUTUBE_BLOCKED), de video beperkt is, een netwerkfout is ontstaan of de conversie zelf mislukte.
+- Na een mislukte download zie je de optie om je eigen bestand te uploaden.
+- Een lokale serveroptie is toegevoegd, zodat je CONVERT. vanaf een computer in hetzelfde wifi-netwerk kunt draaien. Een thuisnetwerk wordt doorgaans minder snel als datacenter-IP gezien, maar YouTube-downloads zijn ook dan niet gegarandeerd.
+- De server herhaalt de volledige YouTube-metadataaanvraag niet meer voordat hij begint met downloaden; er is nu één downloadpassage en zichtbare voortgang waar YouTube dit levert.
 
-- Een Spotify-tracklink herkennen via de officiële openbare Spotify oEmbed-dienst. De titel (en waar beschikbaar artiest) wordt gebruikt om YouTube-resultaten te zoeken. **Er wordt geen Spotify-audio gedownload.**
-- Automatisch maximaal vijf YouTube-zoekresultaten tonen. Controleer en selecteer zelf de juiste video.
-- YouTube-videolinks herkennen en, als het downloaden technisch en volgens jouw rechten is toegestaan, het audiospoor ophalen met yt-dlp.
-- MP4/MOV/audio uploaden en als MP3 (320 kbps, 44,1 kHz) of FLAC (24-bit, 44,1 kHz) converteren met FFmpeg.
-- Resultaat voorbeluisteren en downloaden.
-- Vanaf iPhone Safari bedienen en een link naar je eigen STEMS. instellen.
+## Welke onderdelen zijn echt getest?
 
-## BELANGRIJK: één HTML is niet voldoende
+De MP3- en FLAC-conversie van **geüploade bestanden** is lokaal getest met FFmpeg. Voor YouTube zijn de URL-herkenning, de foutmeldingen en de job-flow met een **mock** getest. Het ophalen van auteursrechtelijk beschermd of beschermd platformmateriaal is niet getest en wordt niet gegarandeerd.
 
-Het YouTube-onderdeel vereist een echte Python-server waarop yt-dlp en FFmpeg draaien. De losse `index.html` heeft alleen de frontend. Zet de volledige app online op Render, of gebruik Cloudflare Pages **naast** de Render-server.
+## Route A — gratis Render-cloudserver bijwerken
 
-## Makkelijkste gratis publicatie: één site op Render
+1. Download `CONVERT-v2-Render.zip` en pak uit.
+2. Vervang in dezelfde GitHub-repository van v1 de bestanden: `app.py`, `index.html`, `requirements.txt`, `Dockerfile`, `render.yaml` en `README-NL.md`. Commit.
+3. Render voert automatisch een herdeploy uit als automatisch deployen aanstaat; anders kies *Manual Deploy*.
+4. Wacht tot je site online is en open de site in Safari. Onder *Instellingen* staat de backendversie en de versie van yt-dlp.
+5. Test een video die je mag downloaden. Bij een fout krijg je nu een code en concrete uitleg.
 
-1. Download `CONVERT-v1-Render.zip` en pak het uit via de Bestanden-app op je iPhone of op je computer.
-2. Maak een gratis repository op https://github.com/new, bijvoorbeeld `convert-app`.
-3. Upload vanuit de uitgepakte map de vijf bestanden **`Dockerfile`, `app.py`, `requirements.txt`, `render.yaml`, `index.html`** en commit de bestanden. Ze moeten direct in de hoofdmap van je repository staan (niet in een extra submap).
-4. Ga naar https://dashboard.render.com/ en maak een **New → Web Service** aan. Koppel de GitHub-repository.
-5. Render hoort de `Dockerfile` te vinden. Kies het **Free**-plan. Deploy. Je kunt ook een Render Blueprint maken via `render.yaml`.
-6. Wacht tot de build klaar is. Open daarna het `*.onrender.com`-adres in Safari.
-7. Plak je Spotify- of YouTube-link, controleer de gevonden video, kies MP3/FLAC, vink aan dat je deze audio mag converteren en start de taak.
+**Belangrijk:** dit verhelpt niet automatisch een YouTube-blokkade op het Render-IP-adres. Je kunt dit ook niet betrouwbaar oplossen door steeds een ander nummer te kiezen.
 
-Render Free kan na 15 minuten zonder verkeer pauzeren. De eerste herstart kan ongeveer een minuut kosten. Bij intensief gebruik gelden gratis limieten. Het YouTube-gedeelte kan worden geblokkeerd door YouTube, vooral vanaf gedeelde hosting-IP-adressen. Dit is daarom **een te testen v1, geen garantie dat elke YouTube-link werkt**.
+## Route B — gratis lokale conversieserver (Windows of Mac)
 
-## Optioneel: Cloudflare Pages voor de voorkant
+Dit is de aanbevolen optie als Render consequent geblokkeerd wordt. Je hebt een computer met Docker Desktop en een wifi-netwerk nodig. De computer moet tijdens het omzetten aanstaan.
 
-1. Zet de volledige backend hierboven eerst op Render online.
-2. Upload `CONVERT-v1-Cloudflare-Pages.zip` naar Cloudflare Pages via de direct-uploadmethode. Dit archief bevat alleen `index.html`.
-3. Open de Cloudflare-site en klap onderaan **Instellingen · Server & STEMS.** open.
-4. Vul bij **API-server** het Render-adres in, bijvoorbeeld `https://convert-app.onrender.com` (zonder `/` op het einde), en sla op.
-5. Vanaf nu communiceert Cloudflare Pages met de backend op Render. Ook hier gelden de Render-beperkingen voor YouTube-downloads.
+1. Installeer/start [Docker Desktop](https://www.docker.com/products/docker-desktop/) (gratis voor persoonlijk gebruik onder de toepasselijke licentievoorwaarden).
+2. Pak `CONVERT-v2-Lokaal.zip` uit op je computer.
+3. **Windows:** dubbelklik `START-WINDOWS.bat`. **Mac:** rechtsklik `START-MAC.command` en kies Open; bevestig indien gevraagd.
+4. Wacht tot de Docker-image klaar is. Op je computer kun je `http://localhost:8765` openen.
+5. Zoek het lokale IP-adres van je computer. Windows: opdrachtprompt `ipconfig` en kijk bij *IPv4-adres*. Mac: het startscript toont meestal het lokale IP-adres.
+6. Open Safari op je iPhone, **op dezelfde wifi**, met `http://<IP-VAN-JE-COMPUTER>:8765`. Voorbeeld: `http://192.168.1.25:8765`.
+7. Upload je eigen bestand of gebruik een bron waarvan de download is toegestaan; kies MP3 of FLAC.
 
-## Voor de beste betrouwbaarheid
+De telefoon praat via wifi met je eigen computer. Je hoeft geen Render-credits te gebruiken en het werkgeheugen van je iPhone wordt niet belast met de conversie. Als YouTube ook op je eigen netwerk blokkeert, blijft uploaden van bestanden het betrouwbare alternatief.
 
-- Kies voor Spotify een losse *track*, niet een album of playlist.
-- Controleer de YouTube-resultaten: de eerste automatische suggestie kan een live-, remix- of coverversie zijn.
-- Spotify zelf is nooit de downloadbron.
-- Upload voor gegarandeerdere verwerking het eigen videobestand in de **UPLOAD**-tab. Uploadconversie is lokaal getest met een echte MP4-video van 2:39.
-- 24-bit FLAC voorkomt extra lossy compressie maar herstelt geen informatie uit een gecomprimeerde YouTube-bron.
-- Deze gratis v1 accepteert maximaal één gelijktijdige verwerking, bestanden tot 90 MB en opnames tot 12 minuten. Resultaten verdwijnen na 30 minuten of een serverherstart.
-- Het programma is bedoeld voor gebruik met toestemming of eigen/rechtenvrije media. YouTube en Spotify stellen eigen gebruiksvoorwaarden.
+**Privacy:** de lokale server is bereikbaar voor apparaten op hetzelfde netwerk zolang Docker draait. Gebruik dit niet op een openbaar wifi-netwerk en zet geen port-forwarding aan op je router. De app heeft geen ingebouwde gebruikerslogin. Stop Docker als je klaar bent.
 
-## Status van de tests
+## Spotify / YouTube
 
-- **Echt geslaagd:** uploads van WAV en MP4, FFmpeg MP3-conversie, 24-bit FLAC, downloaden, audioformaat gecontroleerd met ffprobe.
-- **Gesimuleerd geslaagd:** Spotify-resultaatscherm, automatisch YouTube-zoeken, selectie uit meerdere video's en job-flow met een nagebootste YouTube-downloader.
-- **Nog te testen na Render-deploy:** bereikbaarheid Spotify oEmbed en YouTube vanuit de echte online server, daadwerkelijke yt-dlp-download en gebruik in iPhone Safari.
+Spotify ondersteunt via de officiële API geen downloaden van volledige songs. Spotify-links worden alleen gebruikt voor metadata en de titelzoekopdracht. YouTube staat niet toe dat een app via de YouTube-API de audio uit video's downloadt of scheidt. Gebruik CONVERT. alleen voor materiaal waarvoor je de benodigde rechten en toestemming hebt. Persoonlijk gebruik op zichzelf verleent die toestemming niet.
 
-## Bestanden
+## Formaten
 
-- `index.html` — complete iPhone-interface met logo (alle afbeeldingen zitten ingebakken in de HTML).
-- `app.py` — FastAPI-server voor Spotify-lookup, YouTube-zoeken, yt-dlp en FFmpeg.
-- `requirements.txt` — Python-afhankelijkheden inclusief `yt-dlp[default]` en JavaScript-uitdagingsscripts.
-- `Dockerfile` — installatie van Python, FFmpeg, Deno en de server op Render. Deno is nodig voor hedendaagse YouTube JavaScript-challenges.
-- `render.yaml` — Render Blueprint, Free-plan.
+- MP3: 320 kbps, stereo, 44,1 kHz.
+- FLAC: 24-bit, stereo, 44,1 kHz. De encoding is verliesvrij ten opzichte van het gedecodeerde signaal, maar verhoogt de kwaliteit van MP3 of YouTube-audio niet.
+- Maximaal 90 MB per upload en 12 minuten per opname. Eén conversie tegelijk op de gratis server.
+- Resultaten worden automatisch na circa 30 minuten verwijderd of bij herstart van de server.
 
+## Benodigd
+
+- `Dockerfile`, `app.py`, `requirements.txt`, `index.html` vormen de complete server/webapp.
+- `render.yaml` gebruikt het Render Free-plan.
+- `compose.yaml`, `START-WINDOWS.bat`, `START-MAC.command` bieden de lokale Docker-route.
